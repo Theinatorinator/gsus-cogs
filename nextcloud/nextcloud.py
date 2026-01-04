@@ -1,14 +1,29 @@
 from io import BytesIO
+from urllib.error import HTTPError
 
+from redbot.core.utils.chat_formatting import inline
+
+from nextcloud.nextcloud_api import NextCloudAPI
 from tsutils.cogs.apicog import CogWithEndpoints, endpoint
 
+from redbot.core import commands
+
 class NextCloud(CogWithEndpoints):
+    """A cog to interface with NextCloud."""
+
     GSUS_SERVER_ID = 1054471846436798535
 
-    """A cog to interface with NextCloud."""
     def __init__(self, bot, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.bot = bot
+
+        self.api = None
+
+    async def cog_load(self):
+        keys = await self.bot.get_shared_api_tokens('nextcloud')
+        if 'secret' not in keys:
+            raise ValueError("NextCloud cog requires 'secret' shared_api_token. Set this via [p]set api")
+        self.api = NextCloudAPI(keys['secret'])
 
     async def red_get_data_for_user(self, *, user_id):
         """Get a user's personal data."""
@@ -41,6 +56,32 @@ class NextCloud(CogWithEndpoints):
                 },
                 'status': 404
             }
+
+    @commands.group()
+    async def nextcloud(self, ctx):
+        """Interface with NextCloud."""
+        ...
+
+    @nextcloud.group()
+    async def account(self, ctx):
+        """Deal with your account."""
+        ...
+
+    @account.command()
+    async def new(self, ctx):
+        """Create a new account."""
+        try:
+            resp = await self.api.create_new_account(ctx.author.id)
+        except HTTPError as e:
+            if e.response.status_code == 409:
+                await ctx.send("You already have an account.")
+            raise
+
+        username = resp['username']
+        password = resp['password']
+        await ctx.author.send(
+            f"Your account has been created.\n\n"
+            f"Your username is {inline(username)} and your password is {inline(password)}.")
 
 
 
