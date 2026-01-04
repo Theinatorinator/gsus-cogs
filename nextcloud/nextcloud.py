@@ -79,6 +79,7 @@ class NextCloud(CogWithEndpoints):
 
         username = resp['username']
         password = resp['password']
+        await ctx.tick()
         await ctx.author.send(
             f"Your account has been created.\n\n"
             f"Your username is {inline(username)} and your password is {inline(password)}.")
