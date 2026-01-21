@@ -10,7 +10,8 @@ class NextCloudAPI:
 
     def get_headers(self):
         return {
-            'Content-Type': 'application/json',
+            # In theory we should have this, but for some reason it blows evrything up. Works without it so I guess we just don't use it :shrug: 
+            # 'Content-Type': 'application/json',
             'Authorization': f'Basic {self.nextcloud_secret}',
         }
 

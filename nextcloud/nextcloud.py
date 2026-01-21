@@ -1,6 +1,7 @@
 from io import BytesIO
 from typing import Optional
 from urllib.error import HTTPError
+from aiohttp import ClientResponseError
 
 import discord
 from redbot.core.utils.chat_formatting import inline
@@ -81,10 +82,16 @@ class NextCloud(CogWithEndpoints):
 
         try:
             resp = await self.api.create_new_account(user.id)
-        except HTTPError as e:
-            if e.response.status_code == 409:
+        except ClientResponseError as e:
+            if e.status == 409:
                 await ctx.send("You already have an account.")
-            raise
+                return
+            if e.status == 500:
+                await ctx.send("Internal server error, please contact a member of the Tech Team.")
+                return
+        except Exception:
+            await ctx.send("The bot has died :( Please contact a member of the Tech Team")
+            return 
 
         print(resp)
         username = resp['username']
